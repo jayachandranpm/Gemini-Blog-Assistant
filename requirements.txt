@@ -1,0 +1,4 @@
+genai
+Flask
+google-generativeai
+showdown
