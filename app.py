@@ -14,19 +14,26 @@ genai.configure(api_key=os.environ['GOOGLE_API_KEY'])
 def homepage():
     if request.method == 'POST':
         topics = request.form['topics']
-        content_length = int(request.form['content_length'])
+        total_words = int(request.form['content_length'])
         language = request.form.get('language', 'en')
+        words_generated = 0
+        generated_content = ""
 
         if not topics:
             return render_template('index.html', warning="Please enter a topic.")
         else:
-            # Generate content using the Gemini LLM API
             model = genai.GenerativeModel('gemini-pro')
-            prompt = f"Generate content related to {topics} with a length of {content_length} words in {language} language."
-            response = model.generate_content(prompt)
-            generated_content = response.parts[0].text
+            while words_generated < total_words:
+                # Calculate remaining words to generate
+                remaining_words = total_words - words_generated
+                # Limit the request to maximum 1000 words
+                words_to_generate = min(remaining_words, 1000)
+                prompt = f"Generate content related to {topics} with a length of {words_to_generate} words in {language} language."
+                response = model.generate_content(prompt)
+                generated_content += response.parts[0].text
+                words_generated += words_to_generate
 
-            return render_template('index.html', topics=topics, content_length=content_length, language=language, generated_content=generated_content)
+            return render_template('index.html', topics=topics, content_length=total_words, language=language, generated_content=generated_content)
 
     return render_template('index.html')
 
